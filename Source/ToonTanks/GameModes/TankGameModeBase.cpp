@@ -1,25 +1,53 @@
 // 2020 Matthew Barham
 
 #include "TankGameModeBase.h"
+#include "ToonTanks/Pawns/PawnTank.h"
+#include "ToonTanks/Pawns/PawnTurret.h"
+#include "Kismet/GameplayStatics.h"
 
 void ATankGameModeBase::BeginPlay()
 {
-    // get references and game win/lose conditions
+    TargetTurrets = GetTargetTurretCount();
+    PlayerTank = Cast<APawnTank>(UGameplayStatics::GetPlayerPawn(this, 0));
 
-    // call HandleGameStart() to initialize the start countdown, turret activation, pawn check, etc.
+    HandleGameStart();
+
+    Super::BeginPlay();
 }
+
+int32 ATankGameModeBase::GetTargetTurretCount()
+{
+    TSubclassOf<APawnTurret> ClassToFind;
+    ClassToFind = APawnTurret::StaticClass();
+    TArray<AActor *> TurretActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ClassToFind, TurretActors);
+    return TurretActors.Num();
+}
+
 void ATankGameModeBase::ActorDied(AActor *DeadActor)
 {
-    // check what type of Actor died; if turret, tally, if player, lose condition
+    if (DeadActor == PlayerTank)
+    {
+        PlayerTank->PawnDestroyed();
+        HandleGameOver(false);
+    }
+    else if (APawnTurret *DestroyedTurret = Cast<APawnTurret>(DeadActor))
+    {
+        DestroyedTurret->PawnDestroyed();
+
+        TargetTurrets--;
+
+        if (TargetTurrets == 0)
+        {
+            HandleGameOver(true);
+        }
+    }
 }
 void ATankGameModeBase::HandleGameStart()
 {
-    // initialize the start countdown, turret activation, pawn check, etc.
-    // call Blueprint version GameStart()
+    GameStart();
 }
 void ATankGameModeBase::HandleGameOver(bool PlayerWon)
 {
-    // see if the player has destroyed all the turrets, show win result
-    // else if turret destroyed player, show lose result
-    // call blueprint version GameOver()
+    GameOver(PlayerWon);
 }

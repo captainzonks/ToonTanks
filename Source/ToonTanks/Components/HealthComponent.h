@@ -31,5 +31,5 @@ private:
 
 	AActor *Owner;
 
-	ATankGameModeBase *GameModeRed;
+	ATankGameModeBase *GameModeRef;
 };
